@@ -524,18 +524,18 @@ class Visualizer:
         """
         if self.vk_status:
             if key == keyboard.Key.up:
-                self.v[1] = 1
+                self.v[1] = 0.3
             elif key == keyboard.Key.down:
-                self.v[1] = -1
+                self.v[1] = -0.3
             elif key == keyboard.Key.left:
-                self.v[0] = -1
+                self.v[0] = -0.3
             elif key == keyboard.Key.right:
-                self.v[0] = 1
+                self.v[0] = 0.3
             elif hasattr(key, 'char'):
                 if key.char == 'w':
-                    self.v[2] = 1
+                    self.v[2] = 0.3
                 elif key.char == 's':
-                    self.v[2] = -1
+                    self.v[2] = -0.3
 
 
     def on_release(self, key: keyboard.Key) -> None:
