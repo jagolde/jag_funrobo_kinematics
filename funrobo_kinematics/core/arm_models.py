@@ -75,7 +75,7 @@ class BaseRobot():
 
 
     def calc_inverse_kinematics(
-        self, ee: ut.EndEffector, joint_values: List[float], soln: int = 0
+        self, ee: ut.EndEffector, joint_values: List[float], soln: int = 00
     ) -> List[float]:
         """
         Compute an analytical inverse kinematics solution.

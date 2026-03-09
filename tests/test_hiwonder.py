@@ -5,20 +5,21 @@ import yaml
 import funrobo_kinematics.core.utils as ut
 
 
-#TODO Import your robot model script
+# TODO Import your robot model script
 # ---------------------------------------
-from solutions.hiwonder import FiveDOFRobot
+from scripts.hiwonder import Hiwonder
+
 # ---------------------------------------
 
 
-robot_model = FiveDOFRobot()
-N = 100 # number of sample tries
+robot_model = Hiwonder()
+N = 100  # number of sample tries
 
 
 # -----------------------------------------------------------------------------
 # Test description
 # -----------------------------------------------------------------------------
-# - This script uses pytest to run unit tests on the inverse and forward kinematics 
+# - This script uses pytest to run unit tests on the inverse and forward kinematics
 #   functions we implement.
 #
 # - STEPS FOR INVERSE KINEMATICS:
@@ -35,19 +36,25 @@ for joint_values in joint_values_list:
     ee, _ = robot_model.calc_forward_kinematics(joint_values, radians=True)
     ee_list.append([float(ee.x), float(ee.y)])
 
-ids = [f"joint_values_{i}={[round(x,2) for x in q]}" for i, q in enumerate(joint_values_list)]
+ids = [
+    f"joint_values_{i}={[round(x,2) for x in q]}"
+    for i, q in enumerate(joint_values_list)
+]
 
 
 # -----------------------------------------------------------------------------
 # Python test for analytical inverse kinematics
 # -----------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize("joint_values", joint_values_list, ids=ids)
 def test_analytical_ik(joint_values):
     ee, _ = robot_model.calc_forward_kinematics(joint_values, radians=True)
 
     init_joint_values = ut.sample_valid_joints(robot_model)
-    new_joint_values = robot_model.calc_inverse_kinematics(ee, init_joint_values, soln=0)
+    new_joint_values = robot_model.calc_inverse_kinematics(
+        ee, init_joint_values, soln=0
+    )
 
     assert ut.check_valid_ik_soln(new_joint_values, ee, robot_model)
 
@@ -55,6 +62,7 @@ def test_analytical_ik(joint_values):
 # -----------------------------------------------------------------------------
 # Python test for numerical inverse kinematics
 # -----------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize("joint_values", joint_values_list, ids=ids)
 def test_numerical_ik(joint_values):
