@@ -26,19 +26,12 @@ class KinovaRobot(KinovaRobotTemplate):
         )
 
         dh_b0 = [0, 0, 0, np.pi]
-
         dh_01 = [th1, -(l1 + l2), 0, (np.pi / 2)]
-
         dh_12 = [th2 - (np.pi / 2), 0, l3, np.pi]
-
         dh_23 = [th3 - (np.pi / 2), 0, 0, (np.pi / 2)]
-
         dh_34 = [th4, -(l4 + l5), 0, -(np.pi / 2)]
-
         dh_45 = [th5, 0, 0, (np.pi / 2)]
-
         dh_56 = [th6, -(l6 + l7), 0, np.pi]
-
         dh_tables = [dh_b0, dh_01, dh_12, dh_23, dh_34, dh_45, dh_56]
         H_matrix = np.eye(4)
         Hlist = []

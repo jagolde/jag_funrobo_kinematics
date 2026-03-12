@@ -116,7 +116,7 @@ class Hiwonder(FiveDOFRobotTemplate):
         """
         return np.linalg.pinv(self.jacobian(joint_values))
 
-    def calc_numerical_ik(self, ee, joint_values, tol=0.002, ilimit=100):
+    def calc_numerical_ik(self, ee, tol=0.002, ilimit=100):
         mins = np.array([l[0] for l in self.joint_limits])
         maxs = np.array([l[1] for l in self.joint_limits])
 
@@ -210,6 +210,24 @@ class Hiwonder(FiveDOFRobotTemplate):
         th5 = atan2(-R35[2, 0], -R35[2, 1])
         new_joint_values = [th1, th2, th3, th4, th5]
         return new_joint_values
+
+    def plan_path(self, joint_values, desired_ee_list):
+        curr_ee = self.calc_forward_kinematics(joint_values)
+        x_path = []
+        y_path = []
+        z_path = []
+        curr_x, curr_y, curr_z = curr_ee[0], curr_ee[1], curr_ee[2]
+
+        for ee in desired_ee_list:
+            x_path.extend(np.linspace(curr_x, ee[0]))
+            y_path.extend(np.linspace(curr_y, ee[1]))
+            z_path.extend(np.linspace(curr_z, ee[2]))
+            curr_x, curr_y, curr_z = ee[0], ee[1], ee[2]
+        path = np.column_stack((x_path, y_path, z_path))
+        joint_val_list = []
+        for coords in path:
+            joint_val_list.append(self.calc_numerical_ik(coords))
+        return joint_val_list
 
 
 if __name__ == "__main__":
