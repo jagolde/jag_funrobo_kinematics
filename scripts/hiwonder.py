@@ -116,7 +116,7 @@ class Hiwonder(FiveDOFRobotTemplate):
         """
         return np.linalg.pinv(self.jacobian(joint_values))
 
-    def calc_numerical_ik(self, ee, tol=0.002, ilimit=100):
+    def calc_numerical_ik(self, ee, _, tol=0.002, ilimit=100):
         mins = np.array([l[0] for l in self.joint_limits])
         maxs = np.array([l[1] for l in self.joint_limits])
 
@@ -219,11 +219,12 @@ class Hiwonder(FiveDOFRobotTemplate):
             # Wrap angles to [-pi, pi] for removing illegal joint angles
             wrap = lambda a: (a + pi) % (2 * pi) - pi
             new_joint_values = [wrap(th1), wrap(th2), wrap(th3), wrap(th4), wrap(th5)]
+            # new_joint_values = [th1, th2, th3, th4, th5]
             if ut.check_valid_ik_soln(new_joint_values, ee, self):
                 new_joint_list.append(new_joint_values)
-        # new_joint_values = [th1, th2, th3, th4, th5]
+        print(new_joint_list)
         joint_value = new_joint_list[soln]
-    
+
         return joint_value
 
     def plan_path(self, joint_values, desired_ee_list):
@@ -241,7 +242,7 @@ class Hiwonder(FiveDOFRobotTemplate):
         path = np.column_stack((x_path, y_path, z_path))
         joint_val_list = []
         for coords in path:
-            joint_val_list.append(self.calc_numerical_ik(coords))
+            joint_val_list.append(self.calc_numerical_ik(coords, 0))
         return joint_val_list
 
 
