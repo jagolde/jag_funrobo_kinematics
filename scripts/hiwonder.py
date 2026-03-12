@@ -170,46 +170,61 @@ class Hiwonder(FiveDOFRobotTemplate):
         )
         position = [ee.x, ee.y, ee.z]
         euler = (ee.rotx, ee.roty, ee.rotz)
-        th1 = atan2(ee.y, ee.x) + (pi / 2)
         R05 = ut.euler_to_rotm(euler)
         zR05 = R05 @ [0, 0, 1]
-
+        new_joint_list = []
         p4 = position - zR05 * (l4 + l5)
-        plane = np.linalg.norm([p4[0], p4[1]])
-        z_rel = p4[2] - l1
-        L_sq = plane**2 + z_rel**2
-        # print((l2**2 + l3**2 - L_sq) / (2 * l2 * l3))
-        beta = acos((l2**2 + l3**2 - L_sq) / (2 * l2 * l3))
+        for sol_idx in range(4):
+            # Shoulder: soln 0,1 = front; soln 2,3 = back
+            th1_front = atan2(p4[1], p4[0]) + (pi / 2)
+            th1 = th1_front if sol_idx < 2 else th1_front - pi
+            plane = np.linalg.norm([p4[0], p4[1]])
+            z_rel = p4[2] - l1
 
-        th3 = (beta - pi) if soln == 0 else (pi - beta)
-        alpha = atan2(l3 * sin(th3), l2 + l3 * cos(th3))
-        gamma = atan2(z_rel, plane)
-        th2 = gamma - alpha - (pi / 2)
+            # For back-shoulder, flip the plane projection
+            if sol_idx >= 2:
+                plane = -plane
 
-        dh_tables = np.array(
-            [
-                [th1 - (pi / 2), l1, 0, (pi / 2)],
-                [th2 + (pi / 2), 0, l2, 0],
-                [th3, 0, l3, 0],
-            ]
-        )
-        R03 = np.eye(3)
-        for table in dh_tables:
-            theta = table[0]
-            a = table[3]
-            T = np.array(
+            L_sq = plane**2 + z_rel**2
+            beta = acos((l2**2 + l3**2 - L_sq) / (2 * l2 * l3))
+
+            # Elbow: soln 0,2 = elbow-up; soln 1,3 = elbow-down
+            th3 = (beta - pi) if sol_idx % 2 == 0 else (pi - beta)
+            alpha = atan2(l3 * sin(th3), l2 + l3 * cos(th3))
+            gamma = atan2(z_rel, plane)
+            th2 = gamma - alpha - (pi / 2)
+
+            dh_tables = np.array(
                 [
-                    [cos(theta), -sin(theta) * cos(a), sin(theta) * sin(a)],
-                    [sin(theta), cos(theta) * cos(a), -cos(theta) * sin(a)],
-                    [0, sin(a), cos(a)],
+                    [th1 - (pi / 2), l1, 0, (pi / 2)],
+                    [th2 + (pi / 2), 0, l2, 0],
+                    [th3, 0, l3, 0],
                 ]
             )
-            R03 = R03 @ T
-        R35 = R03.T @ R05
-        th4 = atan2(R35[1, 2], R35[0, 2])
-        th5 = atan2(-R35[2, 0], -R35[2, 1])
-        new_joint_values = [th1, th2, th3, th4, th5]
-        return new_joint_values
+            R03 = np.eye(3)
+            for table in dh_tables:
+                theta = table[0]
+                a = table[3]
+                T = np.array(
+                    [
+                        [cos(theta), -sin(theta) * cos(a), sin(theta) * sin(a)],
+                        [sin(theta), cos(theta) * cos(a), -cos(theta) * sin(a)],
+                        [0, sin(a), cos(a)],
+                    ]
+                )
+                R03 = R03 @ T
+            R35 = R03.T @ R05
+            th4 = atan2(R35[1, 2], R35[0, 2])
+            th5 = atan2(-R35[2, 0], -R35[2, 1])
+            # Wrap angles to [-pi, pi] for removing illegal joint angles
+            wrap = lambda a: (a + pi) % (2 * pi) - pi
+            new_joint_values = [wrap(th1), wrap(th2), wrap(th3), wrap(th4), wrap(th5)]
+            if ut.check_valid_ik_soln(new_joint_values, ee, self):
+                new_joint_list.append(new_joint_values)
+        # new_joint_values = [th1, th2, th3, th4, th5]
+        joint_value = new_joint_list[soln]
+    
+        return joint_value
 
     def plan_path(self, joint_values, desired_ee_list):
         curr_ee = self.calc_forward_kinematics(joint_values)
